@@ -38,7 +38,12 @@ func JWTHandler(credentialsFilePath string) func(next http.Handler) http.Handler
 	return func(next http.Handler) http.Handler {
 		hfn := func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-			token := verifyRequest(ctx, client, r)
+			token, err := verifyRequest(ctx, client, r)
+			if err != nil {
+				w.WriteHeader(http.StatusUnauthorized)
+				w.Write([]byte(err.Error()))
+				return
+			}
 			ctx = context.WithValue(ctx, contextKeyAuthtoken, token)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}
@@ -47,12 +52,8 @@ func JWTHandler(credentialsFilePath string) func(next http.Handler) http.Handler
 }
 
 // verifyRequest extracts and verifies token
-func verifyRequest(ctx context.Context, client *auth.Client, r *http.Request) *auth.Token {
-	token, err := client.VerifyIDToken(ctx, tokenFromHeader(r))
-	if err != nil {
-		errLogger.Panicf("error verifying ID token: %v\n", err)
-	}
-	return token
+func verifyRequest(ctx context.Context, client *auth.Client, r *http.Request) (*auth.Token, error) {
+	return client.VerifyIDToken(ctx, tokenFromHeader(r))
 }
 
 // tokenFromHeader tries to retreive the token string from the "Authorization"
