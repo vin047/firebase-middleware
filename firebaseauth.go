@@ -1,4 +1,4 @@
-package firebasemiddleware
+package firebaseauth
 
 import (
 	"context"
@@ -67,7 +67,7 @@ func tokenFromHeader(r *http.Request) string {
 }
 
 // AuthToken gets the auth token from the context
-func AuthToken(ctx context.Context) (string, bool) {
-	tokenStr, ok := ctx.Value(contextKeyAuthtoken).(string)
+func AuthToken(ctx context.Context) (*auth.Token, bool) {
+	tokenStr, ok := ctx.Value(contextKeyAuthtoken).(*auth.Token)
 	return tokenStr, ok
 }
