@@ -20,11 +20,20 @@ var (
 	contextKeyAuthtoken = contextKey("auth-token")
 )
 
-// JWTHandler returns a router middleware for JWT token verification using the Firebase SDK
-func JWTHandler(credentialsFilePath string) func(next http.Handler) http.Handler {
+// JWTHandler returns a router middleware for JWT token verification using the Firebase SDK.
+// If credentialsFilePath is nil, make sure to set GOOGLE_APPLICATION_CREDENTIALS environment
+// variable, otherwise will fail to initialize the SDK.
+// See: https://firebase.google.com/docs/admin/setup#initialize_the_sdk for more info.
+func JWTHandler(credentialsFilePath *string) func(next http.Handler) http.Handler {
 	// initialise sdk
-	opt := option.WithCredentialsFile(credentialsFilePath)
-	app, err := firebase.NewApp(context.Background(), nil, opt)
+	var app *firebase.App
+	var err error
+	if credentialsFilePath == nil {
+		app, err = firebase.NewApp(context.Background(), nil)
+	} else {
+		opt := option.WithCredentialsFile(*credentialsFilePath)
+		app, err = firebase.NewApp(context.Background(), nil, opt)
+	}
 	if err != nil {
 		errLogger.Fatalf("error initializing app: %v\n", err)
 	}
